@@ -3,7 +3,7 @@ import boto3
 import json
 import uuid
 
-app = Flask(_name_)
+app = Flask("app")
 bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
 
 @app.route('/analyze-risk', methods=['POST'])
@@ -21,6 +21,3 @@ def analyze_risk():
     
     result = response['output']['message']['content'][0]['text']
     return jsonify({"status": "success", "data": result})
-
-if _name_ == '_main_':
-    app.run(host='0.0.0.0', port=5000)

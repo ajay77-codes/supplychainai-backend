@@ -1,16 +1,13 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import boto3
 import json
 
 app = Flask("app")
-bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
+# This is the magic line that allows your GitHub website to talk to Render
+CORS(app) 
 
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-    return response
+bedrock = boto3.client('bedrock-runtime', region_name='us-east-1')
 
 @app.route('/analyze-risk', methods=['POST'])
 def analyze_risk():

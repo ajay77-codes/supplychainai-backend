@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupplyChainAI - Risk Analyzer</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; max-width: 600px; margin: auto; }
+        h1 { color: #58a6ff; text-align: center; }
+        p.subtitle { text-align: center; color: #8b949e; margin-bottom: 30px; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 25px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        label { font-weight: bold; font-size: 14px; color: #c9d1d9; }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: white; font-size: 16px; box-sizing: border-box; }
+        button { background: #238636; border: none; cursor: pointer; font-weight: bold; transition: background 0.3s; }
+        button:hover { background: #2ea043; }
+        button:disabled { background: #484f58; cursor: not-allowed; }
+        #loading { display: none; text-align: center; color: #f1c40f; margin-top: 15px; font-weight: bold; font-size: 14px; }
+        #result { margin-top: 20px; display: none; }
+        .risk-high { color: #f85149; font-weight: bold; font-size: 24px; }
+        .risk-medium { color: #f1c40f; font-weight: bold; font-size: 24px; }
+        .risk-low { color: #3fb950; font-weight: bold; font-size: 24px; }
+        ul { line-height: 1.6; padding-left: 20px; }
+        h3 { color: #79c0ff; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>🔗 SupplyChainAI</h1>
+    <p class="subtitle">Autonomous Multi-Agent Risk Management</p>
+
+    <div class="card">
+        <label>Disruption Type:</label>
+        <input type="text" id="disruption" value="Port strike">
+
+        <label>Region:</label>
+        <input type="text" id="region" value="Singapore">
+
+        <button id="analyzeBtn" onclick="analyzeRisk()">Analyze Risk</button>
+        <div id="loading">⏳ Waking up AI backend... (May take 40 seconds on free tier)</div>
+    </div>
+
+    <div class="card" id="result">
+        <h2>AI Analysis Report</h2>
+        <div id="riskLevel"></div>
+        <br>
+        <h3>Affected Suppliers:</h3>
+        <ul id="affectedSuppliers"></ul>
+        <h3>Recommended Actions:</h3>
+        <ul id="recommendedActions"></ul>
+        <p><b>Estimated Recovery Time:</b> <span id="recoveryTime"></span> days</p>
+    </div>
+
+    <script>
+        async function analyzeRisk() {
+            const disruption = document.getElementById('disruption').value;
+            const region = document.getElementById('region').value;
+            
+            const btn = document.getElementById('analyzeBtn');
+            const loading = document.getElementById('loading');
+            const resultDiv = document.getElementById('result');
+
+            btn.disabled = true;
+            btn.innerText = "Analyzing...";
+            loading.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            try {
+                // Make sure this is your exact Render URL
+                const response = await fetch('https://supplychainai-backend.onrender.com/analyze-risk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ disruption: disruption, region: region })
+                });
+
+                if (!response.ok) throw new Error("Server error");
+
+                const data = await response.json();
+                
+                // Clean up markdown if the AI included it
+                let aiData = data.data;
+                aiData = aiData.replace(/json/g, '').replace(//g, '').trim();
+                const parsed = JSON.parse(aiData);
+
+                let riskClass = "risk-medium";
+                if(parsed.risk_level.toLowerCase().includes("high")) riskClass = "risk-high";
+                if(parsed.risk_level.toLowerCase().includes("low")) riskClass = "risk-low";
+
+                document.getElementById('riskLevel').innerHTML = Risk Level: <span class="${riskClass}">${parsed.risk_level}</span>;
+                
+                document.getElementById('affectedSuppliers').innerHTML = 
+                    parsed.affected_suppliers.map(s => <li>${s}</li>).join('');
+                    
+                document.getElementById('recommendedActions').innerHTML = 
+                    parsed.recommended_actions.map(a => <li>${a}</li>).join('');
+
+                document.getElementById('recoveryTime').innerText = parsed.estimated_recovery_days;
+                resultDiv.style.display = 'block';
+
+            } catch (error) {
+                alert("Error connecting to backend. Make sure Render is Live and URL is correct.");
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Analyze Risk";
+                loading.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
